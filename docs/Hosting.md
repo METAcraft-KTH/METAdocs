@@ -1,17 +1,17 @@
-Hosting:
-Player Data:
+
+# Player Data:
 - Modifying player data while the server is running can be dangerous if the player joins/leaves while the data is being modified. To minimize the risk of data corruption, I recommend making a copy of the player data file and replacing the original when you're ready.
 - It is generally safe to replace individual player data files while the server is running if the player is offline. Replacing the player data of a player who is online will likely have no effect, and is therefore discouraged.
 - If you made a copy of a player data file and started modifying it, but the player in question joined the server while doing it, it's best to wait until they disconnect and restart from scratch.
 - DO NOT REMOVE OR RENAME THE PLAYERDATA DIRECTORY WHILE THE SERVER IS RUNNING. The game uses a file object to target the directory (or at least it did when writing this), and removing the directory makes it invalid which makes the server unable to save any playerdata until it's restarted! If you wish wipe player data but also make a backup, make a copy with the archive button, then delete the contents of the playerdata directory.
 
 
-Mods:
+# Mods:
 - Avoid replacing mods directly while the server is running, as this can cause the server to crash with strange classloading exceptions.
 - Instead, place them in the update directory, they will then be copied and replace the mod with the same modid on the next server restart.
 
 
-Copying from Test Server to Survival:
+# Copying from Test Server to Survival:
 - As long as you never add mods/datapacks directly to survival (i.e. you always put them on the test server before or at the same time), you should always be able to copy directly from the test server.
 - There are some edge cases though:
 	- Ledger contains a config specifying that it should use an external database on Survival. If the config file is overwritten from the test server, it will begin to use a local one instead. Realising that the server is using the local database is never fun, and requires a painful migration to sort out.
@@ -19,7 +19,7 @@ Copying from Test Server to Survival:
 	- Care must be taken when copying world data since you don't want to overwrite the survival world. Copying new dimensions should always be fine though.
 
 
-Copying large structures/parts of the world:
+# Copying large structures/parts of the world:
 - There is no good way to copy larger masses of blocks between worlds (RIP MCEdit you will be missed, Amulet has no UI on Linux... Even then neither of those are very good for the panel since uploading/downloading the world can take a long time especially towards the middle/end of the season).
 - If the area is far enough from player-populated areas, copying region files directly is usually a very fast and efficient method.
 	- Note that this overrides everything in that region (check F3 in-game).
@@ -54,7 +54,7 @@ Copying large structures/parts of the world:
 - WorldEdit likes to break redstone contraptions. Consider pasting structures twice if there are any blocks that require supporting blocks. Structure blocks generally don't have this problem, especially if strict placement is used in 1.21.5+.
 
 
-Backups:
+# Backups:
 - When making backups, it's worth double-checking how much storage space remains (the easiest way to do this is via SSH using the `df` command).
 - If you notice there is not much space left, pruning old backups is an easy way to recover a lot of storage.
 - Distant Horizons eats up a lot of disk space for the LOD cache, so it might be worthwhile trying to exclude it from the backups if possible.
