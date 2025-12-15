@@ -1,0 +1,65 @@
+METAmods Documentation:
+- Extra NBT Tags:
+	- Extra NBT tags added to many mobs in the game allowing for additional functionality.
+	- All Entities:
+		- PreventEnterVehicle:
+			- When true, the given entity will never enter boats and minecarts by touching them. Useful to stop players from cheesing bosses.
+		- metacraft:hide_uuid_tooltip:
+			- When true, the UUID will not be shown when players hover over the entity name in chat.
+	- All "Living" entities (entities which have health and the ability to be killed in some way):
+		- Hostile:
+			- If true, the entity will always aggro at nearby players, even if its passive or neutral.
+	- All "Hostile" entities:
+		- SurvivesSunlight:
+			- If true, the entity will not burn in sunlight. It will also consider sunlit areas safe spawning locations.
+	- Ghasts:
+		- IgnoreYCheck:
+			- If true, ghasts will be able to target players even if they are above/below them.
+		- PreventReturnInstakill:
+			- If true, the ghast will not be insta-killed by a returning ghast fireball anymore (it will still do damage).
+	- AngerParticles:
+		- If true, the entity will render angry villager particles above its head.
+		- This is a leftover from season 3, I might consider removing it since it's easy enough to replicate with datapacks.
+- metacraft:player
+	- An entity which takes the appearance of a player, but with the AI of a mob.
+	- Includes the same parameters as normal mobs and they work as you'd expect.
+	- Knows how to use:
+		- Bow (same AI as skeletons)
+		- Crossbow (same AI as piglins)
+		- Trident (similar to skeleton AI, but will take riptide into account).
+	- Knows how to swim like a player.
+		- Will try to resurface if almost out of breath.
+	- Will sneak and crawl if forced into a space where it can't stand upright.
+	- Uses the modern AI system with the Brain parameter in NBT.
+		- Includes the metacraft:move_target memory, which is a global position that the entity will make its way towards. Uses the same syntax as villager home and job_site.
+	- Will show up as either a fake player or a mannequin client-side (toggled with the renderer parameter).
+	- Some quirks when set to fake_player:
+		- Has some strange scoreboard properties:
+			- On the server, the score holder will be the UUID of the entity.
+			- On the client, the score holder will be the custom name of the entity.
+				- This means that if you have multiple player-entities with the same name, the client will give them all the same score holder.
+		- CustomNameVisible will not work, the name tag will always be visible.
+			- You can hide the name tag by putting the name of the entity (not the UUID!) into a scoreboard team and disabling player name tags for that team.
+		- Does not support resource pack skins in the profile component.
+		- Inline skins must also contain a valid signature from a valid player.
+			- This means you must own a cape to use it, custom capes are not possible (unless everyone installs FabricTailor I guess).
+			- You can either sign skins yourself (by changing your skin on minecraft.net to the target skin and extracting it from your NBT data via FabricTailor, this also includes any vanilla capes you are wearing), or use [MineSkin](https://mineskin.org) (note that this makes the skin publicly available to everyone, and is what happens when you press the upload button in FabricTailor).
+	- Some quirks when set to mannequin:
+		- The arm swing animation (when attacking with a sword) will not work. [MC-302373](https://bugs.mojang.com/browse/MC/issues/MC-302373) (closed because they saw it as a "feature request"). If you want to see this fixed, you'll need to upvote the [feedback post](https://feedback.minecraft.net/hc/en-us/community/posts/40123316475405-Mannequins-should-handle-arm-swinging).
+		- deadmau5 will not render ears, but name tag will still be elevated. [MC-301771](https://bugs.mojang.com/browse/MC/issues/MC-301771) (closed because they saw it as a "feature request"). Luckily you can probably work around this with custom helmets.
+	- Additional NBT tags:
+		- ShoulderEntityLeft and ShoulderEntityRight:
+			- When not empty, renders a parrot with the given NBT data on the left or right shoulders of the player entity respectively.
+			- Unlike normal players, these parrots will generally not dismount on their own, even if the mob dies (although they will dismount if a riptide trident is used).
+		- profile:
+			- Same syntax as the profile component for player heads.
+			- Used to set the skin the player entity should have.
+			- Has some quirks when renderer is set to fake_player (see above).
+		- visible_skin_parts:
+			- A list of all skin parts that should be displayed (allows you to configure if the cape, hat, jacket etc parts of the skin should be visible or not).
+			- Will contain everything by default, remove the names from the list to hide those skin parts.
+			- This works in the inverse way of the hidden_layers parameter used by mannequins.
+		- can_wander:
+			- If true, the metacraft:player will wander around randomly. If false, it will stand still unless provoked.
+		- renderer: 
+			- Can be set to fake_player (the default) or mannequin.
