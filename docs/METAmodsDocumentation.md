@@ -45,7 +45,7 @@ METAmods Documentation:
 			- This means you must own a cape to use it, custom capes are not possible (unless everyone installs FabricTailor I guess).
 			- You can either sign skins yourself (by changing your skin on minecraft.net to the target skin and extracting it from your NBT data via FabricTailor, this also includes any vanilla capes you are wearing), or use [MineSkin](https://mineskin.org) (note that this makes the skin publicly available to everyone, and is what happens when you press the upload button in FabricTailor).
 	- Some quirks when set to mannequin:
-		- The arm swing animation (when attacking with a sword) will not work. [MC-302373](https://bugs.mojang.com/browse/MC/issues/MC-302373) (closed because they saw it as a "feature request"). If you want to see this fixed, you'll need to upvote the [feedback post](https://feedback.minecraft.net/hc/en-us/community/posts/40123316475405-Mannequins-should-handle-arm-swinging).
+		- The arm swing animation does not work in 1.21.11 and older (works in 26.1 onwards).
 		- deadmau5 will not render ears, but name tag will still be elevated. [MC-301771](https://bugs.mojang.com/browse/MC/issues/MC-301771) (closed because they saw it as a "feature request"). Luckily you can probably work around this with custom helmets.
 	- Additional NBT tags:
 		- ShoulderEntityLeft and ShoulderEntityRight:
