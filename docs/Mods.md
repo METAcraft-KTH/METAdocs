@@ -101,7 +101,7 @@ The target of at parameters needs to be written in valid MemberInfo notation.
 For example, to target the method `void printStrAndInt(String str, int i);` in the class `net.example.Helper` you would type: `Lnet/example/Helper;printStrAndInt(Ljava/lang/String;I)V`.
 To target the field `long[] f;` in the nested class `net.example.Helper.Sub` you would type `Lnet/example/Helper$Sub;f:[J`.
 Please see Oracle's documentation for which letter matches which primitive type: https://docs.oracle.com/javase/specs/jvms/se14/html/jvms-4.html#jvms-4.3.2
-Inside the top-level annotations such as @Inject, it is often enough to specify the method name. As of 26.0, it should also be sufficient in @At annotations as well, but if you're working with 1.21.11 or older you'll need to use fully qualified names in the @At targets for remapping to work. If the target method has multiple overloads you may also wish to partially qualify the statement with a parameter list to select a specific overload.
+Inside the top-level annotations such as @Inject, it is often enough to specify the method name. As of 26.1, it should also be sufficient in @At annotations as well, but if you're working with 1.21.11 or older you'll need to use fully qualified names in the @At targets for remapping to work. If the target method has multiple overloads you may also wish to partially qualify the statement with a parameter list to select a specific overload.
 It is highly recommended to use an IDE with an extension for Mixin support (such as IntelliJ with Minecraft Development) to help autocomplete these.
 More info: https://javadoc.io/doc/net.fabricmc/sponge-mixin/latest/org/spongepowered/asm/mixin/injection/struct/MemberInfo.html
 
