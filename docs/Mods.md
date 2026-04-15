@@ -184,36 +184,40 @@ See @Shadow above for how to deal with static methods (public static methods are
 
 
 ## Interface Injection:
-You can inject additional interfaces into classes by simply implementing them in your Mixin class. You can then safely use @Override to implement the methods.  
+You can inject additional interfaces into classes by simply implementing them in your Mixin class. You can then safely use `@Override` to implement the methods.  
 When you've done this, you can safely cast objects of that type to your interface to access these methods.  
-Additionally, you can add them to your fabric.mod.json which will make your dev environment update so you can see the methods without typecasting (when doing this I recommend giving the methods in the interface an empty default implementation as otherwise your IDE might think they're not implemented when extending the base class). More info: https://wiki.fabricmc.net/tutorial:interface_injection  
-To specify generics in fabric.mod.json interface injection, add <> at the end and insert your type qualifier. For example `<Ljava/lang/String;>` places the string type and `<TF;>` places the type variable F, and `<TT;TU;Ljava/lang/String;>` inserts type variables T and U, and then the explicit String class type in that order.  
+You can also add them to a class tweaker to make the new methods directly accessible in the IDE so you don't have to explicitly typecast.  
 Note that for best mod compatibility you should add the mod id or mod namespace to the function name so it won't conflict with other mods.  
 The general standard is to use `modid$name` (or at least that's what the IntelliJ extension recommends).  
+More info: https://docs.fabricmc.net/develop/class-tweakers/interface-injection  
 
 
-# Access Wideners:
+# Class Tweakers:
 Useful when you want to access private classes, extend final classes/records or override final methods.  
-More info: https://wiki.fabricmc.net/tutorial:accesswideners  
-Note that transitive access wideners don't work as expected within multi-modular projects (at least they didn't when I wrote this, if it's been fixed you should remove this line). This means you'll have to define the access widener you need in every module where you need it, while accessors only need to be defined once in a common dependency.  
+They're also helpful for interface injection and extending enums.  
+Essentially, create a classtweaker file and add it to both the fabric.mod.json and to the gradle buildscript.  
+You can also prepend any entry with `transitive-` and it will show up in all modules that depend on that module. So if there is a class tweaker you need in many modules you might want to add it as a transitive entry in metacraft-lib or metacraft-core.  
+Note that you'll need to rerun `./gradlew genSources` after making changes to the class tweakers.  
+Older mods might use the .accesswider file extension instead.  
+More info: https://docs.fabricmc.net/develop/class-tweakers/  
 
 
-# Extending enums with Fabric ASM:
-Sometimes, you want to add an additional enum constant since a function you want to run only accepts an enum for that argument, even though additional values make sense for that argument.  
-Some people have had success with mixins (https://github.com/SpongePowered/Mixin/issues/387#issuecomment-888408556), but using Fabric ASM is probably safer.  
-First, add a new entry point with the name `mm:early_risers` implementing `Runnable` (or reuse one that already exists). This will run very early, so avoid accessing classes you don't need.  
-Then use `ClassTinkerers::enumBuilder` within the run function to specify the class path and name of the enum you want to extend, and the types of the arguments to its constructor.  
-There is one function which takes the classes directly, and one which takes the internal string names instead if you can't access the classes directly.  
-Then, you can add all enums you desire with `EnumAdder::addEnum`, which takes the new enum value's string name and any arguments to pass to the constructor.  
-There is one version of this function which simply accepts the arguments directly, and one which takes a supplier which is useful if any of the classes used for the inputs can't be accessed at this stage.  
-There is also `EnumAdder::addEnumSubclass` which is used in the case where the enum is abstract and you need to implement methods, but using it is a bit complicated and involves adding a mixin which is not registered in the mixin config.  
-When you're ready, you can invoke `EnumAdder::build`.  
-Then, you can access your new enum value at runtime with `ClassTinkerers::getEnum` and passing the enum class and the name you provided in the addEnum method. Note that this method uses a for-loop so you should ideally fetch it once and store it in a constant somewhere. You could also use `Enum::valueOf` (which caches the values), but I can't help but wonder why they didn't do that themselves. It can't be as simple as that they didn't realise that function existed, surely? Maybe they were worried about the valueOf cache being instantiated too early, potentially breaking other mods?  
-More info: https://github.com/Chocohead/Fabric-ASM  
-Fabric ASM also has access transformers, which serve a similar purpose to access wideners. There is generally no reason to use them however. I'm pretty sure the only reason they exist in Fabric ASM is that they were added before access wideners were implemented in Fabric, and there simply wasn't a good reason to remove them.  
-Fabric ASM also has more advanced methods for modifying classes, but you should only touch that if you're doing some crazy stuff and are certain it's the only good way forward.  
+## Access Wideners:
+The main use for these is making private or protected classes public so you can use them in mixins or accessors.  
+They're also useful to make private or protected constructors public and/or to remove final from a class or method so you can extend it.  
+They can also be used as an alternative to accessor mixins for normal methods and fields as well.  
+More Info: https://docs.fabricmc.net/develop/class-tweakers/access-widening  
 
-Note, when working with older versions (1.21.11 and lower), you generally want to use the *intermediary* name rather than the named name, and then remap it to the correct runtime name using `FabricLoader::getMappingResolver`. You can find the intermediary name of a class in Fabric Yarn: https://github.com/FabricMC/yarn
+
+## Enum Extensions:
+You can add additional constants to an enum by defining an "enum mixin" (an enum with the mixin annotation) targetting that enum.  
+If it has a custom constructor, you'll want to define that constructor and annotate it with `@Shadow`.  
+If the target enum has any abstract methods you'll want to shadow them as well so you can override them.  
+Then, you just add the enum constants you want just like any other enum. Just make sure to prefix them with the modid, in our case `METACRAFT_` so it doesn't collide with any other mod.  
+You might also want to add a class tweaker to make them easier to access, but you could probably find it via Enum::valueOf instead.  
+Note that extending enums can cause issues since they are often used in switch statements, so if you can find an API which works around the enum requirement you might want to use that instead. One valid use case is DataFixTypes since that is the "correct" way to assign a datafixer to things like SavedData.  
+More info: https://docs.fabricmc.net/develop/class-tweakers/enum-extension  
+If you need to use an older version of Fabric Loader or Loom you might want to have a look at Fabric ASM instead: https://github.com/Chocohead/Fabric-ASM  
 
 
 # Scheduling Events:
@@ -221,11 +225,9 @@ The "proper" vanilla way of scheduling events is to use `net.minecraft.world.lev
 You can fetch it with: `server.getWorldData().overworldData().getScheduledEvents()`.
 To use this scheduler, each event type you want to schedule must be registered with a MapCodec to `net.minecraft.world.level.timers.TimerCallbacks`.
 
-Careful here, the game does not use RegistryOps when encoding and decoding the scheduler, which means some codecs won't work because they can't access the required registries. More specifically, you'll need to avoid `RegistryFixedCodec`, `RegistryOps::retrieveGetter` and `RegstryOps::retrieveElement` as well as any codec which depends on them. I would also be wary of HolderSetCodec, because if RegistryOps is unavailable it will fall back on its entry codec, which is very often a RegistryFixedCodec (but does not have to be). RegistryFileCodec is generally safe, but always double check the element codec since that's what will be used when RegsistryOps is missing. `Registry::byNameCodec`, `Registry::holderByNameCodec` and `Registry::referenceHolderWithLifecycle` are all safe since they don't need RegistryOps (at least for now).
+Note that in versions prior to 26.1, the game did not use RegistryOps when encoding and decoding the scheduler. This meant that if you wanted to use `RegistryFixedCodec`, `RegistryOps::retrieveGetter` and `RegstryOps::retrieveElement` or any codec depending on them you'd need something like `ObjectStorage` to cache them. These days it does use RegistryOps though so you shouldn't need to worry about that going forwards.
 
-If you want to use an object which has a registry-dependent codec, you can use ObjectStorage. This gives you a wrapper object which simply contains the raw data, which you can then parse when needed. Just keep in mind that it does not do any caching of the data by itself, so avoid parsing the data more than once.
-
-Sometimes you might just want to delay something until the end of this tick. Maybe you're inside a loop of the list you want to modify, or you want to let other entities tick on something before you act. Then you can call `MinecraftServer::scheduleWithResult`. It takes a simple lambda as an argument which is the code you want to run. Note that your lambda has one input parameter, a CompletableFuture. This CompletableFuture can be safely ignored, as it's only used as the return type of the scheduleWithResult function, making it easy to make other threads wait for a return value. You can mark it as completed if you want, but you don't have to. Just be sure to not call join on the return value when running this function on the server thread, as that would cause a deadlock.
+Sometimes you might just want to delay something until the end of this tick. Maybe you're inside a loop of the list you want to modify, or you want to let other entities tick on something before you act. Then you can call `MinecraftServer::schedule` with `MinecraftServer::wrapRunnable` as the argument. You can theoretically give an explicit `TickTask` to `MinecraftServer::schedule` if you wish, but keep in mind that the tick variable is more of a suggestion than a requirement. It will probably run the task immediately regardless of what you put there.
 
 You can also refer to `TaskScheduler` which uses these systems under the hood, making it easier to remember. We also include a custom `Throwaway` schedule event which is hardcoded to never be saved, allowing you to schedule unimportant things such as particles and sounds without needing to define a codec.
 
@@ -239,13 +241,13 @@ A few pointers:
 		- You can use `PlayerDataHelper::updatePlayerData` for this purpose.
 	- Feel free to make new types you introduce recursive though.
 - If you want to add a datafixer for a SavedData, you'll need to put your TypeReference inside the DataFixTypes enum.
-	- The easiest way to do this is to use Fabric ASM.
+	- The easiest way to do this is to use enum extensions.
 	- You can find some examples in metacraft-cutscenes and metacraft-saved-items.
 - One way to avoid needing to define DataFixer extensions is to reuse vanilla data components.
 	- For example, say you want to add a custom inventory container.
 		- Instead of writing the items to data manually or defining a new component, you can just store the items inside the "minecraft:container" data component since that will be covered by the DataFixer already.
 			- Just remember that item components are meant to be immutable. So make sure to create a new component every time the inventory is changed, don't just modify the list.
-		- Also, remember that you can put data components on entities and block entities as well, not just items.
+		- Also, remember that you can put data components on block entities as well, not just items.
 - You technically don't need to add any DataFixers until it's time to update to the next version, but then you might forget it and miss it in testing.
 	- With that said, the new update might overwrite your schema modification in a new schema, forcing you to update the datafixer either way.
 
@@ -256,7 +258,7 @@ A few pointers:
 	- If you want to add compatibility between 2 modules, you have 2 options.
 		1. Add all the compatibility-code to one of the modules and make it depend on the other one.
 		2. Create a third module with all the compatibility code and have it depend on both.
-	- Custom events might be helpful: https://wiki.fabricmc.net/tutorial:events?s%5B%5D=eventfactory
+	- Custom events might be helpful: https://docs.fabricmc.net/develop/events#custom-events
 
 	
 # Testing:
